@@ -1,0 +1,48 @@
+// In this file, we set up the Express application, 
+// define middleware for parsing JSON request bodies, 
+// and set up basic routes and error handling. 
+
+// We import the Express framework and the health routes from the specified file.
+const express = require("express");
+const healthRoutes = require("./routes/healthRoutes");
+
+// We create an instance of the Express application.
+const app = express();
+
+// We use the express.json() middleware to parse incoming JSON request bodies.
+// This allows us to access the data sent in the request body as a JavaScript object.
+// For example, if a client sends a POST request with a JSON body, 
+// we can access the data in that body using req.body in our route handlers.
+app.use(express.json());
+
+// We set up the health check route at the path /api/health.
+// When a GET request is made to this route, 
+// the healthRoutes will handle it and respond with a JSON object indicating that the backend is running.
+app.use("/api/health", healthRoutes);
+
+// We define a catch-all route for handling 404 Not Found errors.
+// If a request is made to a route that does not exist, 
+// this middleware will be executed and respond with a 404 status code and a JSON error message.
+app.use((req, res, next) => {
+  res.status(404).json({
+    error: "Not Found",
+    message: `Route ${req.method} ${req.originalUrl} does not exist`
+  });
+});
+
+// We define an error-handling middleware to catch any unexpected errors that occur in the application.
+// If an error is thrown in any of the route handlers or middleware, 
+// this function will be executed, logging the error and responding with a 
+// 500 Internal Server Error status code and a JSON error message.
+app.use((err, req, res, next) => {
+  console.error(err);
+
+  res.status(500).json({
+    error: "Internal Server Error",
+    message: "Something went wrong on the server"
+  });
+});
+
+// Finally, we export the app instance so that it can be imported and used in other files, 
+// such as server.js where we start the server.
+module.exports = app;
