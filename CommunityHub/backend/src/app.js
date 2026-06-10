@@ -5,9 +5,17 @@
 // We import the Express framework and the health routes from the specified file.
 const express = require("express");
 const healthRoutes = require("./routes/healthRoutes");
+const cors = require("cors");
+
+// We also import the database test routes, which will allow us to test the connection to the SQLite database and return results from a test query.
+const databaseTestRoutes = require("./routes/databaseTestRoutes");
 
 // We create an instance of the Express application.
 const app = express();
+
+// We use the cors middleware to enable Cross-Origin Resource Sharing (CORS) for our backend API.
+// This allows our frontend application, which may be served from a different origin (e.g., http://localhost:5173), to make requests to our backend API without being blocked by the browser's same-origin policy.
+app.use(cors());
 
 // We use the express.json() middleware to parse incoming JSON request bodies.
 // This allows us to access the data sent in the request body as a JavaScript object.
@@ -19,6 +27,11 @@ app.use(express.json());
 // When a GET request is made to this route, 
 // the healthRoutes will handle it and respond with a JSON object indicating that the backend is running.
 app.use("/api/health", healthRoutes);
+
+// We set up the database test route at the path /api/database-test.
+// When a GET request is made to this route, 
+// the databaseTestRoutes will handle it, execute a SQL query to select all rows from the database_test table, and return the results in a JSON response.
+app.use("/api/database-test", databaseTestRoutes);
 
 // We define a catch-all route for handling 404 Not Found errors.
 // If a request is made to a route that does not exist, 
