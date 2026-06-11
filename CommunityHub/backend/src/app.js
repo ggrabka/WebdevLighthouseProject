@@ -18,6 +18,10 @@ const databaseTestRoutes = require("./routes/databaseTestRoutes");
 // We also import the authentication routes, which will handle user registration, login, and logout functionality.
 const authRoutes = require("./routes/authRoutes");
 
+const taskRoutes = require("./routes/taskRoutes");
+const decisionRoutes = require("./routes/decisionRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+
 // We create an instance of the Express application.
 const app = express();
 
@@ -66,6 +70,10 @@ app.use("/api/database-test", databaseTestRoutes);
 // When requests are made to this path (e.g., for user registration, login, or logout), 
 // the authRoutes will handle them and perform the necessary operations related to user authentication.
 app.use("/api", authRoutes);
+
+app.use("/api", taskRoutes);
+app.use("/api", decisionRoutes);
+app.use("/api", dashboardRoutes);
 
 // We define a catch-all route for handling 404 Not Found errors.
 // If a request is made to a route that does not exist, 

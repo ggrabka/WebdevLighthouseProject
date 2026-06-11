@@ -1,17 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const db = require("../database/database");
-
-function requireLogin(req, res, next) {
-  if (!req.session.user) {
-    return res.status(401).json({
-      success: false,
-      message: "You must be logged in to access this endpoint"
-    });
-  }
-
-  next();
-}
+const requireLogin = require("../middleware/requireLogin");
 
 const router = express.Router();
 
