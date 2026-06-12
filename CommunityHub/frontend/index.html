@@ -1,34 +1,125 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CommunityHub</title>
-
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CommunityHub</title>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-
-    <main class="container">
+  <header class="page-header">
+    <div class="brand">
+      <div class="brand-icon">CH</div>
+      <div>
         <h1>CommunityHub</h1>
+        <p>Internal portal for tasks, decisions and community updates</p>
+      </div>
+    </div>
+  </header>
 
-        <p class="subtitle">
-            Frontend is running independently.
+  <main class="app-container">
+    <!-- LOGIN VIEW -->
+    <section id="login-view" class="view">
+      <div class="card login-card">
+        <h2>Member Login</h2>
+        <p class="muted">
+          Please log in to access the internal community dashboard.
         </p>
 
-        <section class="card">
-            <h2>Backend Connection Test</h2>
+        <form id="login-form">
+          <label for="username">Username</label>
+          <input id="username" type="text" value="admin" required />
 
-            <button id="checkBackendButton">
-                Check Backend Connection
-            </button>
+          <label for="password">Password</label>
+          <input id="password" type="password" value="admin123" required />
 
-            <div id="backendStatus" class="status-box">
-                Not checked yet.
-            </div>
-        </section>
-    </main>
+          <button type="submit">Login</button>
+        </form>
 
-    <script src="js/app.js"></script>
+        <p id="login-message" class="message"></p>
+      </div>
+    </section>
+
+    <!-- DASHBOARD VIEW -->
+    <section id="dashboard-view" class="view hidden">
+      <div class="dashboard-header">
+        <div>
+          <h2>Community Dashboard</h2>
+          <p id="welcome-message" class="muted">
+            Loading community data...
+          </p>
+        </div>
+
+        <div class="user-area">
+          <span id="user-info" class="user-badge">Logged in</span>
+          <button id="logout-button" class="secondary-button">Logout</button>
+        </div>
+      </div>
+
+      <nav class="dashboard-nav">
+        <button class="nav-button active" data-section="summary-section">
+          Dashboard
+        </button>
+        <button class="nav-button" data-section="tasks-section">
+          Tasks
+        </button>
+        <button class="nav-button" data-section="decisions-section">
+          Decisions
+        </button>
+      </nav>
+
+      <!-- SUMMARY -->
+      <section id="summary-section" class="dashboard-section">
+        <div class="summary-grid">
+          <div class="summary-card">
+            <h3>Open Tasks</h3>
+            <p id="open-tasks">-</p>
+          </div>
+
+          <div class="summary-card">
+            <h3>Completed Tasks</h3>
+            <p id="completed-tasks">-</p>
+          </div>
+
+          <div class="summary-card">
+            <h3>Open Decisions</h3>
+            <p id="open-decisions">-</p>
+          </div>
+
+          <div class="summary-card">
+            <h3>Approved Decisions</h3>
+            <p id="approved-decisions">-</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>What is currently important?</h3>
+          <p id="dashboard-status">
+            Dashboard data will be loaded asynchronously from the backend.
+          </p>
+        </div>
+      </section>
+
+      <!-- TASKS -->
+      <section id="tasks-section" class="dashboard-section hidden">
+        <div class="card">
+          <h3>Tasks</h3>
+          <p class="muted">Overview of current community tasks.</p>
+          <div id="tasks-list" class="list"></div>
+        </div>
+      </section>
+
+      <!-- DECISIONS -->
+      <section id="decisions-section" class="dashboard-section hidden">
+        <div class="card">
+          <h3>Decisions</h3>
+          <p class="muted">Overview of current community decisions.</p>
+          <div id="decisions-list" class="list"></div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="js/app.js"></script>
 </body>
 </html>

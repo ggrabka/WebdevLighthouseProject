@@ -29,7 +29,10 @@ initDatabase();
 
 // We use the cors middleware to enable Cross-Origin Resource Sharing (CORS) for our backend API.
 // This allows our frontend application, which may be served from a different origin (e.g., http://localhost:5173), to make requests to our backend API without being blocked by the browser's same-origin policy.
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5500",
+  credentials: true
+}));
 
 
 // We use the express.json() middleware to parse incoming JSON request bodies.
