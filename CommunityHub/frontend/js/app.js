@@ -147,9 +147,22 @@ async function loadTasks() {
     const data = await apiFetch("/tasks");
     const tasks = extractArray(data, "tasks");
 
+    const openTaskCount = tasks.filter((task) => {
+  return task.status?.toLowerCase() !== "done";
+}).length;
+
+const completedTaskCount = tasks.filter((task) => {
+  return task.status?.toLowerCase() === "done";
+}).length;
+
+    openTasks.textContent = openTaskCount;
+    completedTasks.textContent = completedTaskCount;
+
     renderList(tasksList, tasks, "No tasks available yet.");
   } catch (error) {
     tasksList.innerHTML = `<p class="message error">Could not load tasks.</p>`;
+    openTasks.textContent = "-";
+    completedTasks.textContent = "-";
   }
 }
 
