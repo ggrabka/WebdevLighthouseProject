@@ -19,6 +19,7 @@ const approvedDecisions = document.getElementById("approved-decisions");
 
 const tasksList = document.getElementById("tasks-list");
 const decisionsList = document.getElementById("decisions-list");
+const recentDecisionsList = document.getElementById("recent-decisions-list");
 
 const navButtons = document.querySelectorAll(".nav-button");
 const dashboardSections = document.querySelectorAll(".dashboard-section");
@@ -171,10 +172,23 @@ async function loadDecisions() {
     const data = await apiFetch("/decisions");
     const decisions = extractArray(data, "decisions");
 
+   const recentDecisions = [...decisions]
+  .sort((a, b) => {
+    const dateA = new Date(a.createdAt || a.created_at || 0);
+    const dateB = new Date(b.createdAt || b.created_at || 0);
+
+    return dateB - dateA;
+  })
+  .slice(0, 3);
+
     renderList(decisionsList, decisions, "No decisions available yet.");
+    renderRecentDecisions(recentDecisions);
   } catch (error) {
     decisionsList.innerHTML =
       `<p class="message error">Could not load decisions.</p>`;
+
+    recentDecisionsList.innerHTML =
+      `<p class="message error">Could not load recent decisions.</p>`;
   }
 }
 
@@ -259,6 +273,39 @@ function renderList(container, items, emptyMessage) {
   });
 }
 
+function renderRecentDecisions(decisions) {
+  if (!decisions || decisions.length === 0) {
+    recentDecisionsList.innerHTML =
+      `<p class="muted">No recent decisions available yet.</p>`;
+    return;
+  }
+
+  recentDecisionsList.innerHTML = "";
+
+  decisions.forEach((decision) => {
+    const title =
+      decision.title ||
+      decision.name ||
+      "Untitled decision";
+
+    const status =
+      decision.status ||
+      decision.state ||
+      "open";
+
+    const element = document.createElement("div");
+    element.className = "list-item";
+
+    element.innerHTML = `
+      <strong>${escapeHtml(title)}</strong>
+      <br />
+      <span class="status-badge">${escapeHtml(status)}</span>
+    `;
+
+    recentDecisionsList.appendChild(element);
+  });
+}
+
 function extractArray(data, propertyName) {
   if (Array.isArray(data)) {
     return data;
@@ -314,6 +361,7 @@ function clearDashboard() {
 
   tasksList.innerHTML = "";
   decisionsList.innerHTML = "";
+  recentDecisionsList.innerHTML = "";
 }
 
 function escapeHtml(value) {
