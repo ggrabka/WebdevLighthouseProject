@@ -159,7 +159,7 @@ const completedTaskCount = tasks.filter((task) => {
     openTasks.textContent = openTaskCount;
     completedTasks.textContent = completedTaskCount;
 
-    renderList(tasksList, tasks, "No tasks available yet.");
+    renderTasks(tasks);
   } catch (error) {
     tasksList.innerHTML = `<p class="message error">Could not load tasks.</p>`;
     openTasks.textContent = "-";
@@ -270,6 +270,51 @@ function renderList(container, items, emptyMessage) {
     `;
 
     container.appendChild(element);
+  });
+}
+
+function renderTasks(tasks) {
+  if (!tasks || tasks.length === 0) {
+    tasksList.innerHTML = `<p class="muted">No tasks available yet.</p>`;
+    return;
+  }
+
+  tasksList.innerHTML = "";
+
+  tasks.forEach((task) => {
+    const title =
+      task.title ||
+      task.name ||
+      "Untitled task";
+
+    const responsiblePerson =
+      task.responsiblePerson ||
+      task.responsible_person ||
+      task.responsible ||
+      task.assignee ||
+      "Not assigned";
+
+    const status =
+      task.status ||
+      "open";
+
+    const dueDate =
+      task.dueDate ||
+      task.due_date ||
+      "No due date";
+
+    const element = document.createElement("div");
+    element.className = "list-item";
+
+    element.innerHTML = `
+      <strong>${escapeHtml(title)}</strong>
+      <span>Responsible: ${escapeHtml(responsiblePerson)}</span>
+      <span>Due date: ${escapeHtml(dueDate)}</span>
+      <br />
+      <span class="status-badge">${escapeHtml(status)}</span>
+    `;
+
+    tasksList.appendChild(element);
   });
 }
 
