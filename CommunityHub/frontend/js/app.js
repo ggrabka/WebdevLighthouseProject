@@ -5,7 +5,6 @@ const dashboardView = document.getElementById("dashboard-view");
 
 const loginForm = document.getElementById("login-form");
 const loginMessage = document.getElementById("login-message");
-
 const logoutButton = document.getElementById("logout-button");
 
 const welcomeMessage = document.getElementById("welcome-message");
@@ -26,375 +25,80 @@ const dashboardSections = document.querySelectorAll(".dashboard-section");
 
 let currentUser = null;
 
-document.addEventListener("DOMContentLoaded", async () => {
-  loginForm.addEventListener("submit", handleLogin);
-  logoutButton.addEventListener("click", handleLogout);
+document.addEventListener("DOMContentLoaded", function () {
+  loginForm.addEventListener("submit", login);
+  logoutButton.addEventListener("click", logout);
 
-  navButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      showDashboardSection(button.dataset.section);
+  navButtons.forEach(function (button) {
+    button.addEventListener("click", function () {
+      showSection(button.dataset.section);
     });
   });
 
-  await checkLoginState();
+  checkLogin();
 });
 
-async function apiFetch(path, options = {}) {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {})
-    }
-  });
-
-  let data = {};
-
+async function checkLogin() {
   try {
-    data = await response.json();
+    await loadDashboard();
+    showDashboard();
   } catch (error) {
-    data = {};
-  }
-
-  if (!response.ok) {
-    const error = new Error(data.message || "Request failed");
-    error.status = response.status;
-    error.data = data;
-    throw error;
-  }
-
-  return data;
-}
-
-async function checkLoginState() {
-  try {
-    await loadDashboardData();
-    showDashboardView();
-  } catch (error) {
-    showLoginView();
-
-    if (error.status === 401) {
-      loginMessage.textContent = "Please log in to view the dashboard.";
-      loginMessage.className = "message";
-    } else {
-      loginMessage.textContent = "Could not connect to backend.";
-      loginMessage.className = "message error";
-    }
+    showLogin();
+    loginMessage.textContent = "Please log in to view the dashboard.";
   }
 }
 
-async function handleLogin(event) {
+async function login(event) {
   event.preventDefault();
 
   const username = document.getElementById("username").value;
   const password = document.getElementById("password").value;
 
   loginMessage.textContent = "Logging in...";
-  loginMessage.className = "message";
 
   try {
-    const data = await apiFetch("/login", {
+    const response = await fetch(API_BASE_URL + "/login", {
       method: "POST",
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
-        username,
-        password
+        username: username,
+        password: password
       })
     });
 
-    currentUser = data.user;
+    const data = await response.json();
 
-    loginMessage.textContent = "";
-    await loadDashboardData();
-    showDashboardView();
+    if (response.ok) {
+      currentUser = data.user;
+      loginMessage.textContent = "";
+
+      await loadDashboard();
+      showDashboard();
+    } else {
+      loginMessage.textContent = data.message;
+      loginMessage.className = "message error";
+    }
   } catch (error) {
-    loginMessage.textContent = error.message || "Login failed.";
+    loginMessage.textContent = "Login failed.";
     loginMessage.className = "message error";
   }
 }
 
-async function handleLogout() {
+async function logout() {
   try {
-    await apiFetch("/logout", {
-      method: "POST"
+    await fetch(API_BASE_URL + "/logout", {
+      method: "POST",
+      credentials: "include"
     });
   } catch (error) {
-    console.log("Logout failed or session already ended:", error);
+    console.log(error);
   }
 
   currentUser = null;
-  clearDashboard();
-  showLoginView();
 
-  loginMessage.textContent = "You have been logged out.";
-  loginMessage.className = "message success";
-}
-
-async function loadDashboardData() {
-  dashboardStatus.textContent = "Loading dashboard data via fetch()...";
-
-  const dashboardData = await apiFetch("/dashboard");
-  renderDashboard(dashboardData);
-
-  await loadTasks();
-  await loadDecisions();
-
-  dashboardStatus.textContent =
-    "Dashboard data was loaded asynchronously from the backend.";
-}
-
-async function loadTasks() {
-  try {
-    const data = await apiFetch("/tasks");
-    const tasks = extractArray(data, "tasks");
-
-    const openTaskCount = tasks.filter((task) => {
-  return task.status?.toLowerCase() !== "done";
-}).length;
-
-const completedTaskCount = tasks.filter((task) => {
-  return task.status?.toLowerCase() === "done";
-}).length;
-
-    openTasks.textContent = openTaskCount;
-    completedTasks.textContent = completedTaskCount;
-
-    renderTasks(tasks);
-  } catch (error) {
-    tasksList.innerHTML = `<p class="message error">Could not load tasks.</p>`;
-    openTasks.textContent = "-";
-    completedTasks.textContent = "-";
-  }
-}
-
-async function loadDecisions() {
-  try {
-    const data = await apiFetch("/decisions");
-    const decisions = extractArray(data, "decisions");
-
-   const recentDecisions = [...decisions]
-  .sort((a, b) => {
-    const dateA = new Date(a.createdAt || a.created_at || 0);
-    const dateB = new Date(b.createdAt || b.created_at || 0);
-
-    return dateB - dateA;
-  })
-  .slice(0, 3);
-
-    renderList(decisionsList, decisions, "No decisions available yet.");
-    renderRecentDecisions(recentDecisions);
-  } catch (error) {
-    decisionsList.innerHTML =
-      `<p class="message error">Could not load decisions.</p>`;
-
-    recentDecisionsList.innerHTML =
-      `<p class="message error">Could not load recent decisions.</p>`;
-  }
-}
-
-function renderDashboard(data) {
-  const dashboard = data.dashboard || data;
-
-  welcomeMessage.textContent =
-    dashboard.welcomeMessage ||
-    dashboard.message ||
-    "Welcome to your community dashboard.";
-
-  openTasks.textContent =
-    dashboard.openTasks ??
-    dashboard.open_tasks ??
-    0;
-
-  completedTasks.textContent =
-    dashboard.completedTasks ??
-    dashboard.completed_tasks ??
-    0;
-
-  openDecisions.textContent =
-    dashboard.openDecisions ??
-    dashboard.open_decisions ??
-    0;
-
-  approvedDecisions.textContent =
-    dashboard.approvedDecisions ??
-    dashboard.approved_decisions ??
-    0;
-
-  const username =
-    currentUser?.username ||
-    dashboard.username ||
-    "member";
-
-  const role =
-    currentUser?.role ||
-    dashboard.userRole ||
-    dashboard.role ||
-    "member";
-
-  userInfo.textContent = `${username} (${role})`;
-}
-
-function renderList(container, items, emptyMessage) {
-  if (!items || items.length === 0) {
-    container.innerHTML = `<p class="muted">${emptyMessage}</p>`;
-    return;
-  }
-
-  container.innerHTML = "";
-
-  items.forEach((item) => {
-    const title =
-      item.title ||
-      item.name ||
-      item.description ||
-      "Untitled item";
-
-    const description =
-      item.description ||
-      item.details ||
-      "";
-
-    const status =
-      item.status ||
-      item.state ||
-      "open";
-
-    const element = document.createElement("div");
-    element.className = "list-item";
-
-    element.innerHTML = `
-      <strong>${escapeHtml(title)}</strong>
-      ${description ? `<span>${escapeHtml(description)}</span>` : ""}
-      <br />
-      <span class="status-badge">${escapeHtml(status)}</span>
-    `;
-
-    container.appendChild(element);
-  });
-}
-
-function renderTasks(tasks) {
-  if (!tasks || tasks.length === 0) {
-    tasksList.innerHTML = `<p class="muted">No tasks available yet.</p>`;
-    return;
-  }
-
-  tasksList.innerHTML = "";
-
-  tasks.forEach((task) => {
-    const title =
-      task.title ||
-      task.name ||
-      "Untitled task";
-
-    const responsiblePerson =
-      task.responsiblePerson ||
-      task.responsible_person ||
-      task.responsible ||
-      task.assignee ||
-      "Not assigned";
-
-    const status =
-      task.status ||
-      "open";
-
-    const dueDate =
-      task.dueDate ||
-      task.due_date ||
-      "No due date";
-
-    const element = document.createElement("div");
-    element.className = "list-item";
-
-    element.innerHTML = `
-      <strong>${escapeHtml(title)}</strong>
-      <span>Responsible: ${escapeHtml(responsiblePerson)}</span>
-      <span>Due date: ${escapeHtml(dueDate)}</span>
-      <br />
-      <span class="status-badge">${escapeHtml(status)}</span>
-    `;
-
-    tasksList.appendChild(element);
-  });
-}
-
-function renderRecentDecisions(decisions) {
-  if (!decisions || decisions.length === 0) {
-    recentDecisionsList.innerHTML =
-      `<p class="muted">No recent decisions available yet.</p>`;
-    return;
-  }
-
-  recentDecisionsList.innerHTML = "";
-
-  decisions.forEach((decision) => {
-    const title =
-      decision.title ||
-      decision.name ||
-      "Untitled decision";
-
-    const status =
-      decision.status ||
-      decision.state ||
-      "open";
-
-    const element = document.createElement("div");
-    element.className = "list-item";
-
-    element.innerHTML = `
-      <strong>${escapeHtml(title)}</strong>
-      <br />
-      <span class="status-badge">${escapeHtml(status)}</span>
-    `;
-
-    recentDecisionsList.appendChild(element);
-  });
-}
-
-function extractArray(data, propertyName) {
-  if (Array.isArray(data)) {
-    return data;
-  }
-
-  if (Array.isArray(data[propertyName])) {
-    return data[propertyName];
-  }
-
-  if (Array.isArray(data.data)) {
-    return data.data;
-  }
-
-  return [];
-}
-
-function showLoginView() {
-  loginView.classList.remove("hidden");
-  dashboardView.classList.add("hidden");
-}
-
-function showDashboardView() {
-  loginView.classList.add("hidden");
-  dashboardView.classList.remove("hidden");
-  showDashboardSection("summary-section");
-}
-
-function showDashboardSection(sectionId) {
-  dashboardSections.forEach((section) => {
-    section.classList.add("hidden");
-  });
-
-  document.getElementById(sectionId).classList.remove("hidden");
-
-  navButtons.forEach((button) => {
-    button.classList.remove("active");
-
-    if (button.dataset.section === sectionId) {
-      button.classList.add("active");
-    }
-  });
-}
-
-function clearDashboard() {
   welcomeMessage.textContent = "";
   userInfo.textContent = "Logged out";
   dashboardStatus.textContent = "";
@@ -407,13 +111,169 @@ function clearDashboard() {
   tasksList.innerHTML = "";
   decisionsList.innerHTML = "";
   recentDecisionsList.innerHTML = "";
+
+  showLogin();
+
+  loginMessage.textContent = "You have been logged out.";
+  loginMessage.className = "message success";
 }
 
-function escapeHtml(value) {
-  return String(value)
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#039;");
+async function loadDashboard() {
+  dashboardStatus.textContent = "Loading dashboard data...";
+
+  const response = await fetch(API_BASE_URL + "/dashboard", {
+    credentials: "include"
+  });
+
+  if (!response.ok) {
+    throw new Error("Not logged in");
+  }
+
+  const data = await response.json();
+
+  welcomeMessage.textContent = data.welcomeMessage || "Welcome to your community dashboard.";
+
+  if (currentUser) {
+    userInfo.textContent = currentUser.username + " (" + currentUser.role + ")";
+  } else {
+    userInfo.textContent = "member";
+  }
+
+  openTasks.textContent = data.openTasks || 0;
+  completedTasks.textContent = data.completedTasks || 0;
+  openDecisions.textContent = data.openDecisions || 0;
+  approvedDecisions.textContent = data.approvedDecisions || 0;
+
+  await loadTasks();
+  await loadDecisions();
+
+  dashboardStatus.textContent = "Dashboard data was loaded with fetch().";
+}
+
+async function loadTasks() {
+  try {
+    const response = await fetch(API_BASE_URL + "/tasks", {
+      credentials: "include"
+    });
+
+    const data = await response.json();
+    const tasks = data.tasks;
+
+    let openCounter = 0;
+    let doneCounter = 0;
+
+    tasks.forEach(function (task) {
+      if (task.status === "done") {
+        doneCounter++;
+      } else {
+        openCounter++;
+      }
+    });
+
+    openTasks.textContent = openCounter;
+    completedTasks.textContent = doneCounter;
+
+    tasksList.innerHTML = "";
+
+    if (tasks.length === 0) {
+      tasksList.innerHTML = "<p class='muted'>No tasks available yet.</p>";
+    }
+
+    tasks.forEach(function (task) {
+      const taskElement = document.createElement("div");
+      taskElement.className = "list-item";
+
+      taskElement.innerHTML = `
+        <strong>${task.title}</strong>
+        <span>Responsible: ${task.responsiblePerson}</span>
+        <span>Due date: ${task.dueDate}</span>
+        <br>
+        <span class="status-badge">${task.status}</span>
+      `;
+
+      tasksList.appendChild(taskElement);
+    });
+  } catch (error) {
+    tasksList.innerHTML = "<p class='message error'>Could not load tasks.</p>";
+    openTasks.textContent = "-";
+    completedTasks.textContent = "-";
+  }
+}
+
+async function loadDecisions() {
+  try {
+    const response = await fetch(API_BASE_URL + "/decisions", {
+      credentials: "include"
+    });
+
+    const data = await response.json();
+    const decisions = data.decisions;
+
+    decisionsList.innerHTML = "";
+    recentDecisionsList.innerHTML = "";
+
+    if (decisions.length === 0) {
+      decisionsList.innerHTML = "<p class='muted'>No decisions available yet.</p>";
+      recentDecisionsList.innerHTML = "<p class='muted'>No recent decisions available yet.</p>";
+    }
+
+    decisions.forEach(function (decision) {
+      const decisionElement = document.createElement("div");
+      decisionElement.className = "list-item";
+
+      decisionElement.innerHTML = `
+        <strong>${decision.title}</strong>
+        <br>
+        <span class="status-badge">${decision.status}</span>
+      `;
+
+      decisionsList.appendChild(decisionElement);
+    });
+
+    const recentDecisions = decisions.slice(0, 3);
+
+    recentDecisions.forEach(function (decision) {
+      const decisionElement = document.createElement("div");
+      decisionElement.className = "list-item";
+
+      decisionElement.innerHTML = `
+        <strong>${decision.title}</strong>
+        <br>
+        <span class="status-badge">${decision.status}</span>
+      `;
+
+      recentDecisionsList.appendChild(decisionElement);
+    });
+  } catch (error) {
+    decisionsList.innerHTML = "<p class='message error'>Could not load decisions.</p>";
+    recentDecisionsList.innerHTML = "<p class='message error'>Could not load recent decisions.</p>";
+  }
+}
+
+function showLogin() {
+  loginView.classList.remove("hidden");
+  dashboardView.classList.add("hidden");
+}
+
+function showDashboard() {
+  loginView.classList.add("hidden");
+  dashboardView.classList.remove("hidden");
+
+  showSection("summary-section");
+}
+
+function showSection(sectionId) {
+  dashboardSections.forEach(function (section) {
+    section.classList.add("hidden");
+  });
+
+  document.getElementById(sectionId).classList.remove("hidden");
+
+  navButtons.forEach(function (button) {
+    button.classList.remove("active");
+
+    if (button.dataset.section === sectionId) {
+      button.classList.add("active");
+    }
+  });
 }
