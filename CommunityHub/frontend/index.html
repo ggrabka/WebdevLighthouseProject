@@ -143,14 +143,43 @@
   <div id="tasks-list"></div>
 </section>
 
-      <!-- DECISIONS -->
-      <section id="decisions-section" class="dashboard-section hidden">
-        <div class="card">
-          <h3>Decisions</h3>
-          <p class="muted">Overview of current community decisions.</p>
-          <div id="decisions-list" class="list"></div>
-        </div>
-      </section>
+<!-- DECISIONS -->
+<section id="decisions-section" class="dashboard-section hidden">
+  <div class="card">
+    <h3>Create Decision Proposal</h3>
+    <p class="muted">Create a new proposal so the community can discuss it.</p>
+
+    <form id="decision-form">
+      <label for="decision-title">Title</label>
+      <input id="decision-title" type="text" required>
+
+      <label for="decision-description">Description</label>
+      <textarea id="decision-description" required></textarea>
+
+      <label for="decision-proposal">Proposal</label>
+      <textarea id="decision-proposal"></textarea>
+
+      <label for="decision-status">Status</label>
+      <select id="decision-status">
+        <option value="Proposal">Proposal</option>
+        <option value="In Discussion">In Discussion</option>
+        <option value="Approved">Approved</option>
+        <option value="Rejected">Rejected</option>
+        <option value="Archived">Archived</option>
+      </select>
+
+      <button type="submit">Create Decision</button>
+    </form>
+
+    <p id="decision-form-message" class="message"></p>
+  </div>
+
+  <div class="card">
+    <h3>Decisions</h3>
+    <p class="muted">Overview of current community decisions.</p>
+    <div id="decisions-list" class="list"></div>
+  </div>
+</section>
     </section>
   </main>
 

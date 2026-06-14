@@ -47,6 +47,13 @@ const tasksList = document.getElementById("tasks-list");
 const decisionsList = document.getElementById("decisions-list");
 const recentDecisionsList = document.getElementById("recent-decisions-list");
 
+const decisionForm = document.getElementById("decision-form");
+const decisionTitle = document.getElementById("decision-title");
+const decisionDescription = document.getElementById("decision-description");
+const decisionProposal = document.getElementById("decision-proposal");
+const decisionStatus = document.getElementById("decision-status");
+const decisionFormMessage = document.getElementById("decision-form-message");
+
 const navButtons = document.querySelectorAll(".nav-button");
 const dashboardSections = document.querySelectorAll(".dashboard-section");
 
@@ -79,6 +86,10 @@ if (taskForm) {
   taskForm.addEventListener("submit", handleTaskFormSubmit);
 }
 
+if (decisionForm) {
+  decisionForm.addEventListener("submit", handleDecisionFormSubmit);
+}
+
 async function handleTaskFormSubmit(event) {
   event.preventDefault();
 
@@ -104,6 +115,35 @@ async function handleTaskFormSubmit(event) {
     await loadTasks();
   } catch (error) {
     taskFormMessage.textContent = error.message;
+  }
+}
+
+async function handleDecisionFormSubmit(event) {
+  event.preventDefault();
+
+  decisionFormMessage.textContent = "Creating decision...";
+
+  const newDecision = {
+    title: decisionTitle.value,
+    description: decisionDescription.value,
+    proposal: decisionProposal.value,
+    status: decisionStatus.value
+  };
+
+  try {
+    await apiFetch("/decisions", {
+      method: "POST",
+      body: JSON.stringify(newDecision)
+    });
+
+    decisionForm.reset();
+    decisionFormMessage.textContent = "Decision was created.";
+
+    await loadDecisions();
+    await loadDashboard();
+    showSection("decisions-section");
+  } catch (error) {
+    decisionFormMessage.textContent = error.message;
   }
 }
 

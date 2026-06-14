@@ -357,3 +357,25 @@ button:hover {
   color: #666666;
   font-size: 14px;
 }
+
+#decision-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+#decision-form input,
+#decision-form textarea,
+#decision-form select {
+  padding: 10px;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+}
+
+#decision-form textarea {
+  min-height: 80px;
+}
+
+#decision-form button {
+  margin-top: 8px;
+}
