@@ -1,38 +1,27 @@
 const express = require("express");
 const requireLogin = require("../middleware/requireLogin");
 
+const db = require("../database/database");
 const router = express.Router();
 
-router.get("/decisions", requireLogin, (req, res) => {
-    const decisions = [
-        {
-            id: 1,
-            title: "Should we organize a summer event?",
-            status: "open",
-            yesVotes: 5,
-            noVotes: 1
-        },
-        {
-            id: 2,
-            title: "Approve new cleaning schedule",
-            status: "approved",
-            yesVotes: 8,
-            noVotes: 2
-        },
-        {
-            id: 3,
-            title: "Buy new tools for shared storage room",
-            status: "open",
-            yesVotes: 3,
-            noVotes: 0
-        }
-    ];
+router.get("/", requireLogin, function (req, res) {
+  const decisions = db.prepare(`
+    SELECT
+      id,
+      title,
+      description,
+      proposal,
+      status,
+      result,
+      created_at AS createdAt
+    FROM decisions
+    ORDER BY id DESC
+  `).all();
 
-    res.json({
-        success: true,
-        message: "Decisions loaded successfully",
-        decisions: decisions
-    });
+  res.json({
+    success: true,
+    decisions: decisions
+  });
 });
 
 module.exports = router;

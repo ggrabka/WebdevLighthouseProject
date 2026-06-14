@@ -1,5 +1,24 @@
 const API_BASE_URL = "http://localhost:3000/api";
 
+async function apiFetch(path, options = {}) {
+  const response = await fetch(API_BASE_URL + path, {
+    ...options,
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Request failed");
+  }
+
+  return data;
+}
+
 const loginView = document.getElementById("login-view");
 const dashboardView = document.getElementById("dashboard-view");
 
@@ -10,6 +29,14 @@ const logoutButton = document.getElementById("logout-button");
 const welcomeMessage = document.getElementById("welcome-message");
 const userInfo = document.getElementById("user-info");
 const dashboardStatus = document.getElementById("dashboard-status");
+
+const taskForm = document.getElementById("task-form");
+const taskTitle = document.getElementById("task-title");
+const taskDescription = document.getElementById("task-description");
+const taskResponsiblePerson = document.getElementById("task-responsible-person");
+const taskStatus = document.getElementById("task-status");
+const taskDueDate = document.getElementById("task-due-date");
+const taskFormMessage = document.getElementById("task-form-message");
 
 const openTasks = document.getElementById("open-tasks");
 const completedTasks = document.getElementById("completed-tasks");
@@ -31,12 +58,54 @@ document.addEventListener("DOMContentLoaded", function () {
 
   navButtons.forEach(function (button) {
     button.addEventListener("click", function () {
-      showSection(button.dataset.section);
+      const sectionId = button.dataset.section;
+
+      showSection(sectionId);
+
+      if (sectionId === "tasks-section") {
+        loadTasks();
+      }
+
+      if (sectionId === "decisions-section") {
+        loadDecisions();
+      }
     });
   });
 
   checkLogin();
 });
+
+if (taskForm) {
+  taskForm.addEventListener("submit", handleTaskFormSubmit);
+}
+
+async function handleTaskFormSubmit(event) {
+  event.preventDefault();
+
+  taskFormMessage.textContent = "Creating task...";
+
+  const newTask = {
+    title: taskTitle.value,
+    description: taskDescription.value,
+    responsiblePerson: taskResponsiblePerson.value,
+    status: taskStatus.value,
+    dueDate: taskDueDate.value
+  };
+
+  try {
+    await apiFetch("/tasks", {
+      method: "POST",
+      body: JSON.stringify(newTask)
+    });
+
+    taskForm.reset();
+    taskFormMessage.textContent = "Task was created.";
+
+    await loadTasks();
+  } catch (error) {
+    taskFormMessage.textContent = error.message;
+  }
+}
 
 async function checkLogin() {
   try {
@@ -59,6 +128,7 @@ async function login(event) {
   try {
     const response = await fetch(API_BASE_URL + "/login", {
       method: "POST",
+      //the browser is allowed to send the session cookie together with the request to the backend, which is necessary for authentication and session management
       credentials: "include",
       headers: {
         "Content-Type": "application/json"
@@ -134,6 +204,7 @@ async function loadDashboard() {
   welcomeMessage.textContent = data.welcomeMessage || "Welcome to your community dashboard.";
 
   if (currentUser) {
+    //role
     userInfo.textContent = currentUser.username + " (" + currentUser.role + ")";
   } else {
     userInfo.textContent = "member";
@@ -144,26 +215,19 @@ async function loadDashboard() {
   openDecisions.textContent = data.openDecisions || 0;
   approvedDecisions.textContent = data.approvedDecisions || 0;
 
-  await loadTasks();
-  await loadDecisions();
-
   dashboardStatus.textContent = "Dashboard data was loaded with fetch().";
 }
 
 async function loadTasks() {
   try {
-    const response = await fetch(API_BASE_URL + "/tasks", {
-      credentials: "include"
-    });
-
-    const data = await response.json();
+    const data = await apiFetch("/tasks");
     const tasks = data.tasks;
 
     let openCounter = 0;
     let doneCounter = 0;
 
     tasks.forEach(function (task) {
-      if (task.status === "done") {
+      if (task.status && task.status.toLowerCase() === "done") {
         doneCounter++;
       } else {
         openCounter++;
@@ -177,19 +241,90 @@ async function loadTasks() {
 
     if (tasks.length === 0) {
       tasksList.innerHTML = "<p class='muted'>No tasks available yet.</p>";
+      return;
     }
 
     tasks.forEach(function (task) {
       const taskElement = document.createElement("div");
       taskElement.className = "list-item";
 
-      taskElement.innerHTML = `
-        <strong>${task.title}</strong>
-        <span>Responsible: ${task.responsiblePerson}</span>
-        <span>Due date: ${task.dueDate}</span>
-        <br>
-        <span class="status-badge">${task.status}</span>
-      `;
+      const titleLabel = document.createElement("label");
+      titleLabel.textContent = "Title";
+
+      const titleInput = document.createElement("input");
+      titleInput.className = "edit-task-title";
+      titleInput.value = task.title || "";
+
+      const responsibleLabel = document.createElement("label");
+      responsibleLabel.textContent = "Responsible person";
+
+      const responsibleInput = document.createElement("input");
+      responsibleInput.className = "edit-task-responsible";
+      responsibleInput.value = task.responsiblePerson || "";
+
+      const statusLabel = document.createElement("label");
+      statusLabel.textContent = "Status";
+
+      const statusSelect = document.createElement("select");
+      statusSelect.className = "edit-task-status";
+
+      const statuses = ["New", "In Progress", "Waiting for Feedback", "Done"];
+
+      statuses.forEach(function (status) {
+        const option = document.createElement("option");
+        option.value = status;
+        option.textContent = status;
+
+        if (task.status === status) {
+          option.selected = true;
+        }
+
+        statusSelect.appendChild(option);
+      });
+
+      const dueDateLabel = document.createElement("label");
+      dueDateLabel.textContent = "Due date";
+
+      const dueDateInput = document.createElement("input");
+      dueDateInput.className = "edit-task-due-date";
+      dueDateInput.type = "date";
+      dueDateInput.value = task.dueDate || "";
+
+      const saveButton = document.createElement("button");
+      saveButton.textContent = "Save changes";
+
+      saveButton.type = "button";
+
+      const deleteButton = document.createElement("button");
+      deleteButton.type = "button";
+      deleteButton.textContent = "Delete task";
+
+      deleteButton.addEventListener("click", function () {
+      deleteTask(task.id);
+      });
+
+      const message = document.createElement("p");
+      message.className = "message";
+
+      saveButton.addEventListener("click", function () {
+        updateTask(task.id, taskElement, message);
+      });
+
+      taskElement.appendChild(titleLabel);
+      taskElement.appendChild(titleInput);
+
+      taskElement.appendChild(responsibleLabel);
+      taskElement.appendChild(responsibleInput);
+
+      taskElement.appendChild(statusLabel);
+      taskElement.appendChild(statusSelect);
+
+      taskElement.appendChild(dueDateLabel);
+      taskElement.appendChild(dueDateInput);
+
+      taskElement.appendChild(saveButton);
+      taskElement.appendChild(deleteButton);
+      taskElement.appendChild(message);
 
       tasksList.appendChild(taskElement);
     });
@@ -200,13 +335,91 @@ async function loadTasks() {
   }
 }
 
-async function loadDecisions() {
+async function updateTask(taskId, taskElement, messageElement) {
+  messageElement.textContent = "Saving task...";
+
+  const titleInput = taskElement.querySelector(".edit-task-title");
+  const responsibleInput = taskElement.querySelector(".edit-task-responsible");
+  const statusSelect = taskElement.querySelector(".edit-task-status");
+  const dueDateInput = taskElement.querySelector(".edit-task-due-date");
+
+  const updatedTask = {
+    title: titleInput.value,
+    responsiblePerson: responsibleInput.value,
+    status: statusSelect.value,
+    dueDate: dueDateInput.value
+  };
+
   try {
-    const response = await fetch(API_BASE_URL + "/decisions", {
-      credentials: "include"
+    await apiFetch("/tasks/" + taskId, {
+      method: "PUT",
+      body: JSON.stringify(updatedTask)
     });
 
-    const data = await response.json();
+    messageElement.textContent = "Task was updated.";
+
+    await loadTasks();
+  } catch (error) {
+    messageElement.textContent = "Could not update task.";
+  }
+}
+
+async function deleteTask(taskId) {
+  const shouldDelete = confirm("Do you really want to delete this task?");
+
+  if (!shouldDelete) {
+    return;
+  }
+
+  try {
+    await apiFetch("/tasks/" + taskId, {
+      method: "DELETE"
+    });
+
+    await loadTasks();
+  } catch (error) {
+    alert("Could not delete task.");
+  }
+}
+
+function renderTasks(tasks) {
+  const tasksList = document.getElementById("tasks-list");
+
+  tasksList.innerHTML = "";
+
+  if (tasks.length === 0) {
+    tasksList.textContent = "No tasks found.";
+    return;
+  }
+
+  tasks.forEach((task) => {
+    const taskCard = document.createElement("div");
+    taskCard.className = "task-card";
+
+    const title = document.createElement("h3");
+    title.textContent = task.title;
+
+    const responsiblePerson = document.createElement("p");
+    responsiblePerson.textContent = "Responsible: " + (task.responsiblePerson || "Not set");
+
+    const status = document.createElement("p");
+    status.textContent = "Status: " + (task.status || "New");
+
+    const dueDate = document.createElement("p");
+    dueDate.textContent = "Due date: " + (task.dueDate || "Not set");
+
+    taskCard.appendChild(title);
+    taskCard.appendChild(responsiblePerson);
+    taskCard.appendChild(status);
+    taskCard.appendChild(dueDate);
+
+    tasksList.appendChild(taskCard);
+  });
+}
+
+async function loadDecisions() {
+  try {
+    const data = await apiFetch("/decisions");
     const decisions = data.decisions;
 
     decisionsList.innerHTML = "";
@@ -215,17 +428,25 @@ async function loadDecisions() {
     if (decisions.length === 0) {
       decisionsList.innerHTML = "<p class='muted'>No decisions available yet.</p>";
       recentDecisionsList.innerHTML = "<p class='muted'>No recent decisions available yet.</p>";
+      return;
     }
 
     decisions.forEach(function (decision) {
       const decisionElement = document.createElement("div");
       decisionElement.className = "list-item";
 
-      decisionElement.innerHTML = `
-        <strong>${decision.title}</strong>
-        <br>
-        <span class="status-badge">${decision.status}</span>
-      `;
+      const title = document.createElement("h4");
+      title.textContent = decision.title;
+
+      const description = document.createElement("p");
+      description.textContent = decision.description;
+
+      const status = document.createElement("p");
+      status.innerHTML = "Status: <span class='status-badge'>" + decision.status + "</span>";
+
+      decisionElement.appendChild(title);
+      decisionElement.appendChild(description);
+      decisionElement.appendChild(status);
 
       decisionsList.appendChild(decisionElement);
     });
@@ -236,11 +457,14 @@ async function loadDecisions() {
       const decisionElement = document.createElement("div");
       decisionElement.className = "list-item";
 
-      decisionElement.innerHTML = `
-        <strong>${decision.title}</strong>
-        <br>
-        <span class="status-badge">${decision.status}</span>
-      `;
+      const title = document.createElement("strong");
+      title.textContent = decision.title;
+
+      const status = document.createElement("p");
+      status.innerHTML = "Status: <span class='status-badge'>" + decision.status + "</span>";
+
+      decisionElement.appendChild(title);
+      decisionElement.appendChild(status);
 
       recentDecisionsList.appendChild(decisionElement);
     });

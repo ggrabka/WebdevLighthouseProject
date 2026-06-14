@@ -6,6 +6,18 @@
 const db = require("./database");
 const bcrypt = require("bcryptjs");
 
+function addColumnIfMissing(tableName, columnName, columnSql) {
+  const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
+
+  const columnExists = columns.some((column) => {
+    return column.name === columnName;
+  });
+
+  if (!columnExists) {
+    db.prepare(`ALTER TABLE ${tableName} ADD COLUMN ${columnSql}`).run();
+  }
+}
+
 function initDatabase() {
   db.prepare(`
     CREATE TABLE IF NOT EXISTS users (
@@ -31,6 +43,74 @@ function initDatabase() {
 
     console.log("Default admin user created.");
   }
+
+    db.prepare(`
+    CREATE TABLE IF NOT EXISTS tasks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      description TEXT,
+      responsible_person TEXT,
+      status TEXT NOT NULL,
+      due_date TEXT,
+      created_at TEXT NOT NULL
+    )
+  `).run();
+
+  db.prepare(`
+  CREATE TABLE IF NOT EXISTS decisions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT NOT NULL,
+    proposal TEXT,
+    status TEXT NOT NULL,
+    result TEXT,
+    created_at TEXT NOT NULL
+  )
+`).run();
+
+ const decisionCount = db.prepare("SELECT COUNT(*) AS count FROM decisions").get();
+
+if (decisionCount.count === 0) {
+  const insertDecision = db.prepare(`
+    INSERT INTO decisions (title, description, proposal, status, result, created_at)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  insertDecision.run(
+    "Renovate the community room",
+    "The community room needs new paint and better lighting.",
+    "We should collect offers from local painters and discuss the budget.",
+    "In Discussion",
+    "",
+    new Date().toISOString()
+  );
+
+  insertDecision.run(
+    "Create shared garden rules",
+    "The garden should have clear rules for watering and shared usage.",
+    "Each member should be responsible for watering on one day per week.",
+    "Proposal",
+    "",
+    new Date().toISOString()
+  );
+
+  insertDecision.run(
+    "Buy new cleaning equipment",
+    "The old cleaning equipment is broken and should be replaced.",
+    "Buy one new vacuum cleaner and basic cleaning tools.",
+    "Approved",
+    "Approved by the organizers.",
+    new Date().toISOString()
+  );
+}
+
+  addColumnIfMissing("tasks", "description", "description TEXT");
+  addColumnIfMissing("tasks", "responsible_person", "responsible_person TEXT");
+  addColumnIfMissing("tasks", "status", "status TEXT NOT NULL DEFAULT 'New'");
+  addColumnIfMissing("tasks", "due_date", "due_date TEXT");
+  addColumnIfMissing("tasks", "created_at", "created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP");
+
+  console.log("Database initialized");
 }
 
 module.exports = initDatabase;

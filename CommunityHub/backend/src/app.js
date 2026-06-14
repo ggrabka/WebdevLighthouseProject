@@ -74,9 +74,9 @@ app.use("/api/database-test", databaseTestRoutes);
 // the authRoutes will handle them and perform the necessary operations related to user authentication.
 app.use("/api", authRoutes);
 
-app.use("/api", taskRoutes);
-app.use("/api", decisionRoutes);
-app.use("/api", dashboardRoutes);
+app.use("/api/tasks", taskRoutes);
+app.use("/api/decisions", decisionRoutes);
+app.use("/api/dashboard", dashboardRoutes);
 
 // We define a catch-all route for handling 404 Not Found errors.
 // If a request is made to a route that does not exist, 

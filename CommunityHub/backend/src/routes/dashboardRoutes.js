@@ -3,7 +3,7 @@ const requireLogin = require("../middleware/requireLogin");
 
 const router = express.Router();
 
-router.get("/dashboard", requireLogin, (req, res) => {
+router.get("/", requireLogin, (req, res) => {
     const dashboardData = {
         welcomeMessage: `Welcome, ${req.session.user.username}`,
         openTasks: 2,

@@ -107,13 +107,41 @@
       </section>
 
       <!-- TASKS -->
-      <section id="tasks-section" class="dashboard-section hidden">
-        <div class="card">
-          <h3>Tasks</h3>
-          <p class="muted">Overview of current community tasks.</p>
-          <div id="tasks-list" class="list"></div>
-        </div>
-      </section>
+<section id="tasks-section" class="dashboard-section hidden">
+  <h2>Tasks</h2>
+
+  <div class="form-card">
+    <h3>Create New Task</h3>
+
+    <form id="task-form">
+      <label for="task-title">Title</label>
+      <input id="task-title" type="text" required>
+
+      <label for="task-description">Description</label>
+      <textarea id="task-description"></textarea>
+
+      <label for="task-responsible-person">Responsible person</label>
+      <input id="task-responsible-person" type="text">
+
+      <label for="task-status">Status</label>
+      <select id="task-status">
+        <option value="New">New</option>
+        <option value="In Progress">In Progress</option>
+        <option value="Waiting for Feedback">Waiting for Feedback</option>
+        <option value="Done">Done</option>
+      </select>
+
+      <label for="task-due-date">Due date</label>
+      <input id="task-due-date" type="date">
+
+      <button type="submit">Create Task</button>
+    </form>
+
+    <p id="task-form-message"></p>
+  </div>
+
+  <div id="tasks-list"></div>
+</section>
 
       <!-- DECISIONS -->
       <section id="decisions-section" class="dashboard-section hidden">

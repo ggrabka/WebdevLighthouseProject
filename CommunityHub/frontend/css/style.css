@@ -248,3 +248,112 @@ button:hover {
     align-items: flex-start;
   }
 }
+
+.form-card {
+  background-color: white;
+  padding: 16px;
+  margin-bottom: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.form-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-card input,
+.form-card textarea,
+.form-card select {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.form-card button {
+  margin-top: 8px;
+  padding: 10px;
+  cursor: pointer;
+}
+
+.task-card {
+  background-color: white;
+  padding: 14px;
+  margin-bottom: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.list-item input,
+.list-item select {
+  display: block;
+  width: 100%;
+  margin: 6px 0 12px 0;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.list-item label {
+  font-weight: bold;
+  margin-top: 8px;
+}
+
+.list-item button {
+  margin-top: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+.list-item button {
+  margin-right: 8px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+}
+
+/* Lists for tasks, decisions and recent decisions */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+/* Single item in a list */
+.list-item {
+  border: 1px solid #dddddd;
+  border-radius: 8px;
+  padding: 14px;
+  background-color: #ffffff;
+}
+
+/* Decision/task title inside a list item */
+.list-item h4 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+}
+
+/* Text inside a list item */
+.list-item p {
+  margin: 6px 0;
+  line-height: 1.4;
+}
+
+/* Small status label */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 12px;
+  background-color: #e8f0fe;
+  color: #1a56db;
+  font-size: 13px;
+  font-weight: bold;
+}
+
+/* Muted helper text */
+.muted {
+  color: #666666;
+  font-size: 14px;
+}
