@@ -42,7 +42,24 @@ function initDatabase() {
     `).run("admin", passwordHash, "admin");
 
     console.log("Default admin user created.");
+
   }
+
+
+    const existingMember = db
+  .prepare("SELECT * FROM users WHERE username = ?")
+  .get("member");
+
+if (!existingMember) {
+  const passwordHash = bcrypt.hashSync("member123", 10);
+
+  db.prepare(`
+    INSERT INTO users (username, password_hash, role)
+    VALUES (?, ?, ?)
+  `).run("member", passwordHash, "member");
+
+  console.log("Default member user created.");
+}
 
     db.prepare(`
     CREATE TABLE IF NOT EXISTS tasks (

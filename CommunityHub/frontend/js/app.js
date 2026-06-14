@@ -57,7 +57,49 @@ const decisionFormMessage = document.getElementById("decision-form-message");
 const navButtons = document.querySelectorAll(".nav-button");
 const dashboardSections = document.querySelectorAll(".dashboard-section");
 
+const weatherLocation = document.getElementById("weather-location");
+const weatherTemperature = document.getElementById("weather-temperature");
+const weatherWind = document.getElementById("weather-wind");
+const weatherMessage = document.getElementById("weather-message");
+
 let currentUser = null;
+
+function isAdmin() {
+  return currentUser && currentUser.role === "admin";
+}
+
+function updateTaskFormVisibility() {
+  if (!taskForm) {
+    return;
+  }
+
+  const taskFormCard = taskForm.parentElement;
+
+  if (isAdmin()) {
+    taskFormCard.style.display = "block";
+  } else {
+    taskFormCard.style.display = "none";
+  }
+}
+
+function updateDecisionFormVisibility() {
+  if (!decisionForm) {
+    return;
+  }
+
+  const decisionFormCard = decisionForm.parentElement;
+
+  if (isAdmin()) {
+    decisionFormCard.style.display = "block";
+  } else {
+    decisionFormCard.style.display = "none";
+  }
+}
+
+function updateRoleBasedVisibility() {
+  updateTaskFormVisibility();
+  updateDecisionFormVisibility();
+}
 
 document.addEventListener("DOMContentLoaded", function () {
   loginForm.addEventListener("submit", login);
@@ -93,6 +135,11 @@ if (decisionForm) {
 async function handleTaskFormSubmit(event) {
   event.preventDefault();
 
+    if (!isAdmin()) {
+    taskFormMessage.textContent = "Only admins can create tasks.";
+    return;
+  }
+
   taskFormMessage.textContent = "Creating task...";
 
   const newTask = {
@@ -120,6 +167,11 @@ async function handleTaskFormSubmit(event) {
 
 async function handleDecisionFormSubmit(event) {
   event.preventDefault();
+
+  if (!isAdmin()) {
+  decisionFormMessage.textContent = "Only admins can create decisions.";
+  return;
+}
 
   decisionFormMessage.textContent = "Creating decision...";
 
@@ -149,9 +201,19 @@ async function handleDecisionFormSubmit(event) {
 
 async function checkLogin() {
   try {
+    const loginData = await apiFetch("/protected");
+
+    currentUser = loginData.user;
+
     await loadDashboard();
+    await loadWeather();
+
+    updateRoleBasedVisibility();
     showDashboard();
   } catch (error) {
+    currentUser = null;
+    updateRoleBasedVisibility();
+
     showLogin();
     loginMessage.textContent = "Please log in to view the dashboard.";
   }
@@ -186,6 +248,8 @@ async function login(event) {
       loginMessage.textContent = "";
 
       await loadDashboard();
+      await loadWeather();
+      updateRoleBasedVisibility();
       showDashboard();
     } else {
       loginMessage.textContent = data.message;
@@ -208,6 +272,7 @@ async function logout() {
   }
 
   currentUser = null;
+  updateRoleBasedVisibility();
 
   welcomeMessage.textContent = "";
   userInfo.textContent = "Logged out";
@@ -250,12 +315,46 @@ async function loadDashboard() {
     userInfo.textContent = "member";
   }
 
-  openTasks.textContent = data.openTasks || 0;
-  completedTasks.textContent = data.completedTasks || 0;
-  openDecisions.textContent = data.openDecisions || 0;
-  approvedDecisions.textContent = data.approvedDecisions || 0;
+const openTaskCount = data.openTasks || 0;
+const completedTaskCount = data.completedTasks || 0;
+const openDecisionCount = data.openDecisions || 0;
+const approvedDecisionCount = data.approvedDecisions || 0;
 
-  dashboardStatus.textContent = "Dashboard data was loaded with fetch().";
+openTasks.textContent = openTaskCount;
+completedTasks.textContent = completedTaskCount;
+openDecisions.textContent = openDecisionCount;
+approvedDecisions.textContent = approvedDecisionCount;
+
+if (openTaskCount > 0 && openDecisionCount > 0) {
+  dashboardStatus.textContent =
+    "There are " + openTaskCount + " open tasks and " +
+    openDecisionCount + " open decisions.";
+} else if (openTaskCount > 0) {
+  dashboardStatus.textContent =
+    "There are " + openTaskCount + " open tasks that need attention.";
+} else if (openDecisionCount > 0) {
+  dashboardStatus.textContent =
+    "There are " + openDecisionCount + " open decisions to review.";
+} else {
+  dashboardStatus.textContent =
+    "Everything looks good. There are no open tasks or decisions.";
+}
+}
+
+async function loadWeather() {
+  try {
+    const data = await apiFetch("/weather");
+
+    weatherLocation.textContent = data.location;
+    weatherTemperature.textContent = data.temperature + " °C";
+    weatherWind.textContent = data.windSpeed + " km/h";
+    weatherMessage.textContent = data.weatherText;
+  } catch (error) {
+    weatherLocation.textContent = "-";
+    weatherTemperature.textContent = "-";
+    weatherWind.textContent = "-";
+    weatherMessage.textContent = "Weather could not be loaded.";
+  }
 }
 
 async function loadTasks() {
@@ -288,83 +387,109 @@ async function loadTasks() {
       const taskElement = document.createElement("div");
       taskElement.className = "list-item";
 
-      const titleLabel = document.createElement("label");
-      titleLabel.textContent = "Title";
+      if (isAdmin()) {
+        const titleLabel = document.createElement("label");
+        titleLabel.textContent = "Title";
 
-      const titleInput = document.createElement("input");
-      titleInput.className = "edit-task-title";
-      titleInput.value = task.title || "";
+        const titleInput = document.createElement("input");
+        titleInput.className = "edit-task-title";
+        titleInput.value = task.title || "";
 
-      const responsibleLabel = document.createElement("label");
-      responsibleLabel.textContent = "Responsible person";
+        const responsibleLabel = document.createElement("label");
+        responsibleLabel.textContent = "Responsible person";
 
-      const responsibleInput = document.createElement("input");
-      responsibleInput.className = "edit-task-responsible";
-      responsibleInput.value = task.responsiblePerson || "";
+        const responsibleInput = document.createElement("input");
+        responsibleInput.className = "edit-task-responsible";
+        responsibleInput.value = task.responsiblePerson || task.responsible_person || "";
 
-      const statusLabel = document.createElement("label");
-      statusLabel.textContent = "Status";
+        const statusLabel = document.createElement("label");
+        statusLabel.textContent = "Status";
 
-      const statusSelect = document.createElement("select");
-      statusSelect.className = "edit-task-status";
+        const statusSelect = document.createElement("select");
+        statusSelect.className = "edit-task-status";
 
-      const statuses = ["New", "In Progress", "Waiting for Feedback", "Done"];
+        const statuses = ["New", "In Progress", "Waiting for Feedback", "Done"];
 
-      statuses.forEach(function (status) {
-        const option = document.createElement("option");
-        option.value = status;
-        option.textContent = status;
+        statuses.forEach(function (status) {
+          const option = document.createElement("option");
+          option.value = status;
+          option.textContent = status;
 
-        if (task.status === status) {
-          option.selected = true;
-        }
+          if (task.status === status) {
+            option.selected = true;
+          }
 
-        statusSelect.appendChild(option);
-      });
+          statusSelect.appendChild(option);
+        });
 
-      const dueDateLabel = document.createElement("label");
-      dueDateLabel.textContent = "Due date";
+        const dueDateLabel = document.createElement("label");
+        dueDateLabel.textContent = "Due date";
 
-      const dueDateInput = document.createElement("input");
-      dueDateInput.className = "edit-task-due-date";
-      dueDateInput.type = "date";
-      dueDateInput.value = task.dueDate || "";
+        const dueDateInput = document.createElement("input");
+        dueDateInput.className = "edit-task-due-date";
+        dueDateInput.type = "date";
+        dueDateInput.value = task.dueDate || task.due_date || "";
 
-      const saveButton = document.createElement("button");
-      saveButton.textContent = "Save changes";
+        const saveButton = document.createElement("button");
+        saveButton.type = "button";
+        saveButton.textContent = "Save changes";
 
-      saveButton.type = "button";
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete task";
+        deleteButton.className = "danger-button";
 
-      const deleteButton = document.createElement("button");
-      deleteButton.type = "button";
-      deleteButton.textContent = "Delete task";
+        const message = document.createElement("p");
+        message.className = "message";
 
-      deleteButton.addEventListener("click", function () {
-      deleteTask(task.id);
-      });
+        saveButton.addEventListener("click", function () {
+          updateTask(task.id, taskElement, message);
+        });
 
-      const message = document.createElement("p");
-      message.className = "message";
+        deleteButton.addEventListener("click", function () {
+          deleteTask(task.id);
+        });
 
-      saveButton.addEventListener("click", function () {
-        updateTask(task.id, taskElement, message);
-      });
+        taskElement.appendChild(titleLabel);
+        taskElement.appendChild(titleInput);
 
-      taskElement.appendChild(titleLabel);
-      taskElement.appendChild(titleInput);
+        taskElement.appendChild(responsibleLabel);
+        taskElement.appendChild(responsibleInput);
 
-      taskElement.appendChild(responsibleLabel);
-      taskElement.appendChild(responsibleInput);
+        taskElement.appendChild(statusLabel);
+        taskElement.appendChild(statusSelect);
 
-      taskElement.appendChild(statusLabel);
-      taskElement.appendChild(statusSelect);
+        taskElement.appendChild(dueDateLabel);
+        taskElement.appendChild(dueDateInput);
 
-      taskElement.appendChild(dueDateLabel);
-      taskElement.appendChild(dueDateInput);
+        taskElement.appendChild(saveButton);
+        taskElement.appendChild(deleteButton);
+        taskElement.appendChild(message);
+      } else {
+        const title = document.createElement("h4");
+        title.textContent = task.title || "Untitled task";
 
-      taskElement.appendChild(saveButton);
-      taskElement.appendChild(deleteButton);
-      taskElement.appendChild(message);
+        const description = document.createElement("p");
+        description.textContent = task.description || "No description available.";
+
+        const responsiblePerson = document.createElement("p");
+        responsiblePerson.textContent =
+          "Responsible person: " + (task.responsiblePerson || task.responsible_person || "Not set");
+
+        const status = document.createElement("p");
+        status.innerHTML =
+          "Status: <span class='status-badge'>" + (task.status || "New") + "</span>";
+
+        const dueDate = document.createElement("p");
+        dueDate.textContent =
+          "Due date: " + (task.dueDate || task.due_date || "Not set");
+
+        taskElement.appendChild(title);
+        taskElement.appendChild(description);
+        taskElement.appendChild(responsiblePerson);
+        taskElement.appendChild(status);
+        taskElement.appendChild(dueDate);
+      }
 
       tasksList.appendChild(taskElement);
     });
@@ -481,12 +606,81 @@ async function loadDecisions() {
       const description = document.createElement("p");
       description.textContent = decision.description;
 
-      const status = document.createElement("p");
-      status.innerHTML = "Status: <span class='status-badge'>" + decision.status + "</span>";
+      const proposal = document.createElement("p");
+      proposal.textContent = "Proposal: " + (decision.proposal || "No proposal documented.");
+
+      const currentStatus = document.createElement("p");
+      currentStatus.innerHTML =
+        "Current status: <span class='status-badge'>" + decision.status + "</span>";
+
+      const currentResult = document.createElement("p");
+      currentResult.textContent =
+        "Result: " + (decision.result || "No result documented yet.");
 
       decisionElement.appendChild(title);
       decisionElement.appendChild(description);
-      decisionElement.appendChild(status);
+      decisionElement.appendChild(proposal);
+      decisionElement.appendChild(currentStatus);
+      decisionElement.appendChild(currentResult);
+
+      if (isAdmin()) {
+        const statusLabel = document.createElement("label");
+        statusLabel.textContent = "Change status";
+
+        const statusSelect = document.createElement("select");
+        statusSelect.className = "edit-decision-status";
+
+        const statuses = ["Proposal", "In Discussion", "Approved", "Rejected", "Archived"];
+
+        statuses.forEach(function (status) {
+          const option = document.createElement("option");
+          option.value = status;
+          option.textContent = status;
+
+          if (decision.status === status) {
+            option.selected = true;
+          }
+
+          statusSelect.appendChild(option);
+        });
+
+        const resultLabel = document.createElement("label");
+        resultLabel.textContent = "Result";
+
+        const resultInput = document.createElement("textarea");
+        resultInput.className = "edit-decision-result";
+        resultInput.value = decision.result || "";
+
+        const saveButton = document.createElement("button");
+        saveButton.type = "button";
+        saveButton.textContent = "Save decision";
+
+        const deleteButton = document.createElement("button");
+        deleteButton.type = "button";
+        deleteButton.textContent = "Delete decision";
+        deleteButton.className = "danger-button";
+
+        const message = document.createElement("p");
+        message.className = "message";
+
+        saveButton.addEventListener("click", function () {
+          updateDecision(decision.id, decisionElement, message);
+        });
+
+        deleteButton.addEventListener("click", function () {
+          deleteDecision(decision.id);
+        });
+
+        decisionElement.appendChild(statusLabel);
+        decisionElement.appendChild(statusSelect);
+
+        decisionElement.appendChild(resultLabel);
+        decisionElement.appendChild(resultInput);
+
+        decisionElement.appendChild(saveButton);
+        decisionElement.appendChild(deleteButton);
+        decisionElement.appendChild(message);
+      }
 
       decisionsList.appendChild(decisionElement);
     });
@@ -501,7 +695,8 @@ async function loadDecisions() {
       title.textContent = decision.title;
 
       const status = document.createElement("p");
-      status.innerHTML = "Status: <span class='status-badge'>" + decision.status + "</span>";
+      status.innerHTML =
+        "Status: <span class='status-badge'>" + decision.status + "</span>";
 
       decisionElement.appendChild(title);
       decisionElement.appendChild(status);
@@ -511,6 +706,55 @@ async function loadDecisions() {
   } catch (error) {
     decisionsList.innerHTML = "<p class='message error'>Could not load decisions.</p>";
     recentDecisionsList.innerHTML = "<p class='message error'>Could not load recent decisions.</p>";
+  }
+}
+
+async function updateDecision(decisionId, decisionElement, messageElement) {
+  messageElement.textContent = "Saving decision...";
+
+  const statusSelect = decisionElement.querySelector(".edit-decision-status");
+  const resultInput = decisionElement.querySelector(".edit-decision-result");
+
+  const updatedDecision = {
+    status: statusSelect.value,
+    result: resultInput.value
+  };
+
+  try {
+    await apiFetch("/decisions/" + decisionId, {
+      method: "PUT",
+      body: JSON.stringify(updatedDecision)
+    });
+
+    messageElement.textContent = "Decision was updated.";
+
+    await loadDecisions();
+    await loadDashboard();
+
+    showSection("decisions-section");
+  } catch (error) {
+    messageElement.textContent = "Could not update decision.";
+  }
+}
+
+async function deleteDecision(decisionId) {
+  const shouldDelete = confirm("Do you really want to delete this decision?");
+
+  if (!shouldDelete) {
+    return;
+  }
+
+  try {
+    await apiFetch("/decisions/" + decisionId, {
+      method: "DELETE"
+    });
+
+    await loadDecisions();
+    await loadDashboard();
+
+    showSection("decisions-section");
+  } catch (error) {
+    alert("Could not delete decision.");
   }
 }
 

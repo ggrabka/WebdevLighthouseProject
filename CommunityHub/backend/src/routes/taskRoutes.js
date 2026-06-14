@@ -3,6 +3,7 @@ const router = express.Router();
 
 const db = require("../database/database");
 const requireLogin = require("../middleware/requireLogin");
+const requireAdmin = require("../middleware/requireAdmin");
 
 router.get("/", requireLogin, (req, res) => {
   const tasks = db.prepare(`
@@ -24,7 +25,7 @@ router.get("/", requireLogin, (req, res) => {
   });
 });
 
-router.post("/", requireLogin, (req, res) => {
+router.post("/", requireAdmin, (req, res) => {
   const title = req.body.title;
   const description = req.body.description;
   const responsiblePerson = req.body.responsiblePerson;
@@ -78,7 +79,7 @@ router.post("/", requireLogin, (req, res) => {
   });
 });
 
-router.put("/:id", requireLogin, (req, res) => {
+router.put("/:id", requireAdmin, (req, res) => {
   const id = req.params.id;
 
   const title = req.body.title;
@@ -141,7 +142,7 @@ router.put("/:id", requireLogin, (req, res) => {
   });
 });
 
-router.delete("/:id", requireLogin, (req, res) => {
+router.delete("/:id", requireAdmin, (req, res) => {
   const id = req.params.id;
 
   const existingTask = db.prepare(`

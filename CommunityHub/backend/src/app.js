@@ -21,6 +21,7 @@ const authRoutes = require("./routes/authRoutes");
 const taskRoutes = require("./routes/taskRoutes");
 const decisionRoutes = require("./routes/decisionRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
+const weatherRoutes = require("./routes/weatherRoutes");
 
 // We create an instance of the Express application.
 const app = express();
@@ -73,6 +74,8 @@ app.use("/api/database-test", databaseTestRoutes);
 // When requests are made to this path (e.g., for user registration, login, or logout), 
 // the authRoutes will handle them and perform the necessary operations related to user authentication.
 app.use("/api", authRoutes);
+
+app.use("/api/weather", weatherRoutes);
 
 app.use("/api/tasks", taskRoutes);
 app.use("/api/decisions", decisionRoutes);

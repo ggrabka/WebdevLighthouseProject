@@ -10,16 +10,17 @@ body {
 }
 
 .page-header {
+  display: flex;
+  flex-direction: row;
   background: #0f5f7a;
   color: white;
   padding: 24px;
 }
 
 .brand {
-  max-width: 1100px;
+  max-width: auto;
   margin: 0 auto;
   display: flex;
-  align-items: center;
   gap: 16px;
 }
 
@@ -378,4 +379,35 @@ button:hover {
 
 #decision-form button {
   margin-top: 8px;
+}
+
+.edit-decision-status,
+.edit-decision-result {
+  width: 100%;
+  margin-top: 6px;
+  margin-bottom: 12px;
+  padding: 8px;
+  border: 1px solid #cccccc;
+  border-radius: 6px;
+}
+
+.edit-decision-result {
+  min-height: 70px;
+  resize: vertical;
+}
+
+.danger-button {
+  background-color: #c0392b;
+  color: white;
+  margin-left: 8px;
+}
+
+.danger-button:hover {
+  background-color: #a93226;
+}
+
+.header-weather {
+  align-items: center;
+  justify-content:center;
+  align-items: center;
 }

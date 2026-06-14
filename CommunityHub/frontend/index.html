@@ -7,15 +7,22 @@
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header class="page-header">
-    <div class="brand">
-      <div class="brand-icon">CH</div>
-      <div>
-        <h1>CommunityHub</h1>
-        <p>Internal portal for tasks, decisions and community updates</p>
-      </div>
+<header class="page-header">
+  <div class="brand">
+    <div class="brand-icon">CH</div>
+    <div>
+      <h1>CommunityHub</h1>
+      <p>Internal portal for tasks, decisions and community updates</p>
     </div>
-  </header>
+  </div>
+
+  <div class="header-weather">
+    <span id="weather-location">Vienna / Seestadt</span>
+    <span id="weather-temperature">-</span>
+    <span id="weather-wind">-</span>
+    <span id="weather-message">Weather loading...</span>
+  </div>
+</header>
 
   <main class="app-container">
     <!-- LOGIN VIEW -->
@@ -80,6 +87,7 @@
             <h3>Completed Tasks</h3>
             <p id="completed-tasks">-</p>
           </div>
+
 
           <div class="summary-card">
             <h3>Open Decisions</h3>
