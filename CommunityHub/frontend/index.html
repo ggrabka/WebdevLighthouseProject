@@ -63,17 +63,27 @@
         </div>
       </div>
 
-      <nav class="dashboard-nav">
-        <button class="nav-button active" data-section="summary-section">
-          Dashboard
-        </button>
-        <button class="nav-button" data-section="tasks-section">
-          Tasks
-        </button>
-        <button class="nav-button" data-section="decisions-section">
-          Decisions
-        </button>
-      </nav>
+<button id="hamburger-button" class="hamburger-button" type="button">
+  ☰ Menu
+</button>
+
+<div id="sidebar-overlay" class="sidebar-overlay hidden"></div>
+
+<nav id="sidebar-menu" class="sidebar-menu hidden">
+  <h3>CommunityHub</h3>
+
+  <button class="nav-button sidebar-link active" type="button" data-section="summary-section">
+    Dashboard
+  </button>
+
+  <button class="nav-button sidebar-link" type="button" data-section="tasks-section">
+    Tasks
+  </button>
+
+  <button class="nav-button sidebar-link" type="button" data-section="decisions-section">
+    Decisions
+  </button>
+</nav>
 
       <!-- SUMMARY -->
       <section id="summary-section" class="dashboard-section">
@@ -114,11 +124,20 @@
         </div>
       </section>
 
-      <!-- TASKS -->
+<!-- TASKS -->
 <section id="tasks-section" class="dashboard-section hidden">
-  <h2>Tasks</h2>
+  <div class="section-title-row">
+    <div>
+      <h2>Tasks</h2>
+      <p class="muted">Overview of current community tasks.</p>
+    </div>
 
-  <div class="form-card">
+    <button id="new-task-button" class="secondary-button hidden" type="button">
+      + New Task
+    </button>
+  </div>
+
+  <div id="task-create-card" class="form-card hidden">
     <h3>Create New Task</h3>
 
     <form id="task-form">
@@ -145,7 +164,7 @@
       <button type="submit">Create Task</button>
     </form>
 
-    <p id="task-form-message"></p>
+    <p id="task-form-message" class="message"></p>
   </div>
 
   <div id="tasks-list"></div>
@@ -153,7 +172,18 @@
 
 <!-- DECISIONS -->
 <section id="decisions-section" class="dashboard-section hidden">
-  <div class="card">
+  <div class="section-title-row">
+    <div>
+      <h2>Decisions</h2>
+      <p class="muted">Overview of current community decisions.</p>
+    </div>
+
+    <button id="new-decision-button" class="secondary-button hidden" type="button">
+      + New Decision
+    </button>
+  </div>
+
+  <div id="decision-create-card" class="card hidden">
     <h3>Create Decision Proposal</h3>
     <p class="muted">Create a new proposal so the community can discuss it.</p>
 
@@ -184,7 +214,7 @@
 
   <div class="card">
     <h3>Decisions</h3>
-    <p class="muted">Overview of current community decisions.</p>
+    <p class="muted">Current proposals and decisions of the community.</p>
     <div id="decisions-list" class="list"></div>
   </div>
 </section>

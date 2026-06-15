@@ -57,10 +57,20 @@ const decisionFormMessage = document.getElementById("decision-form-message");
 const navButtons = document.querySelectorAll(".nav-button");
 const dashboardSections = document.querySelectorAll(".dashboard-section");
 
+const hamburgerButton = document.getElementById("hamburger-button");
+const sidebarMenu = document.getElementById("sidebar-menu");
+const sidebarOverlay = document.getElementById("sidebar-overlay");
+
 const weatherLocation = document.getElementById("weather-location");
 const weatherTemperature = document.getElementById("weather-temperature");
 const weatherWind = document.getElementById("weather-wind");
 const weatherMessage = document.getElementById("weather-message");
+
+const newTaskButton = document.getElementById("new-task-button");
+const taskCreateCard = document.getElementById("task-create-card");
+
+const newDecisionButton = document.getElementById("new-decision-button");
+const decisionCreateCard = document.getElementById("decision-create-card");
 
 let currentUser = null;
 
@@ -69,30 +79,32 @@ function isAdmin() {
 }
 
 function updateTaskFormVisibility() {
-  if (!taskForm) {
+  if (!newTaskButton || !taskCreateCard) {
     return;
   }
 
-  const taskFormCard = taskForm.parentElement;
-
   if (isAdmin()) {
-    taskFormCard.style.display = "block";
+    newTaskButton.classList.remove("hidden");
+    taskCreateCard.classList.add("hidden");
+    newTaskButton.textContent = "+ New Task";
   } else {
-    taskFormCard.style.display = "none";
+    newTaskButton.classList.add("hidden");
+    taskCreateCard.classList.add("hidden");
   }
 }
 
 function updateDecisionFormVisibility() {
-  if (!decisionForm) {
+  if (!newDecisionButton || !decisionCreateCard) {
     return;
   }
 
-  const decisionFormCard = decisionForm.parentElement;
-
   if (isAdmin()) {
-    decisionFormCard.style.display = "block";
+    newDecisionButton.classList.remove("hidden");
+    decisionCreateCard.classList.add("hidden");
+    newDecisionButton.textContent = "+ New Decision";
   } else {
-    decisionFormCard.style.display = "none";
+    newDecisionButton.classList.add("hidden");
+    decisionCreateCard.classList.add("hidden");
   }
 }
 
@@ -101,9 +113,59 @@ function updateRoleBasedVisibility() {
   updateDecisionFormVisibility();
 }
 
+function openSidebar() {
+  sidebarMenu.classList.remove("hidden");
+  sidebarOverlay.classList.remove("hidden");
+}
+
+function closeSidebar() {
+  sidebarMenu.classList.add("hidden");
+  sidebarOverlay.classList.add("hidden");
+}
+
+function toggleSidebar() {
+  if (sidebarMenu.classList.contains("hidden")) {
+    openSidebar();
+  } else {
+    closeSidebar();
+  }
+}
+
+function toggleTaskCreateForm() {
+  if (taskCreateCard.classList.contains("hidden")) {
+    taskCreateCard.classList.remove("hidden");
+    newTaskButton.textContent = "Cancel";
+  } else {
+    taskCreateCard.classList.add("hidden");
+    newTaskButton.textContent = "+ New Task";
+  }
+}
+
+function toggleDecisionCreateForm() {
+  if (decisionCreateCard.classList.contains("hidden")) {
+    decisionCreateCard.classList.remove("hidden");
+    newDecisionButton.textContent = "Cancel";
+  } else {
+    decisionCreateCard.classList.add("hidden");
+    newDecisionButton.textContent = "+ New Decision";
+  }
+}
+
 document.addEventListener("DOMContentLoaded", function () {
   loginForm.addEventListener("submit", login);
   logoutButton.addEventListener("click", logout);
+
+  if (hamburgerButton) {
+    hamburgerButton.addEventListener("click", function () {
+      toggleSidebar();
+    });
+  }
+
+  if (sidebarOverlay) {
+    sidebarOverlay.addEventListener("click", function () {
+      closeSidebar();
+    });
+  }
 
   navButtons.forEach(function (button) {
     button.addEventListener("click", function () {
@@ -118,8 +180,22 @@ document.addEventListener("DOMContentLoaded", function () {
       if (sectionId === "decisions-section") {
         loadDecisions();
       }
+
+      closeSidebar();
     });
   });
+
+  if (newTaskButton) {
+    newTaskButton.addEventListener("click", function () {
+      toggleTaskCreateForm();
+    });
+  }
+
+  if (newDecisionButton) {
+    newDecisionButton.addEventListener("click", function () {
+      toggleDecisionCreateForm();
+    });
+  }
 
   checkLogin();
 });
@@ -159,6 +235,9 @@ async function handleTaskFormSubmit(event) {
     taskForm.reset();
     taskFormMessage.textContent = "Task was created.";
 
+    taskCreateCard.classList.add("hidden");
+newTaskButton.textContent = "+ New Task";
+
     await loadTasks();
   } catch (error) {
     taskFormMessage.textContent = error.message;
@@ -190,6 +269,9 @@ async function handleDecisionFormSubmit(event) {
 
     decisionForm.reset();
     decisionFormMessage.textContent = "Decision was created.";
+
+    decisionCreateCard.classList.add("hidden");
+newDecisionButton.textContent = "+ New Decision";
 
     await loadDecisions();
     await loadDashboard();
@@ -387,108 +469,55 @@ async function loadTasks() {
       const taskElement = document.createElement("div");
       taskElement.className = "list-item";
 
+      const title = document.createElement("h4");
+      title.textContent = task.title || "Untitled task";
+
+      const description = document.createElement("p");
+      description.textContent = task.description || "No description available.";
+
+      const responsiblePerson = document.createElement("p");
+      responsiblePerson.textContent =
+        "Responsible person: " + (task.responsiblePerson || task.responsible_person || "Not set");
+
+      const status = document.createElement("p");
+      status.innerHTML =
+        "Status: <span class='status-badge'>" + (task.status || "New") + "</span>";
+
+      const dueDate = document.createElement("p");
+      dueDate.textContent =
+        "Due date: " + (task.dueDate || task.due_date || "Not set");
+
+      taskElement.appendChild(title);
+      taskElement.appendChild(description);
+      taskElement.appendChild(responsiblePerson);
+      taskElement.appendChild(status);
+      taskElement.appendChild(dueDate);
+
       if (isAdmin()) {
-        const titleLabel = document.createElement("label");
-        titleLabel.textContent = "Title";
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
 
-        const titleInput = document.createElement("input");
-        titleInput.className = "edit-task-title";
-        titleInput.value = task.title || "";
-
-        const responsibleLabel = document.createElement("label");
-        responsibleLabel.textContent = "Responsible person";
-
-        const responsibleInput = document.createElement("input");
-        responsibleInput.className = "edit-task-responsible";
-        responsibleInput.value = task.responsiblePerson || task.responsible_person || "";
-
-        const statusLabel = document.createElement("label");
-        statusLabel.textContent = "Status";
-
-        const statusSelect = document.createElement("select");
-        statusSelect.className = "edit-task-status";
-
-        const statuses = ["New", "In Progress", "Waiting for Feedback", "Done"];
-
-        statuses.forEach(function (status) {
-          const option = document.createElement("option");
-          option.value = status;
-          option.textContent = status;
-
-          if (task.status === status) {
-            option.selected = true;
-          }
-
-          statusSelect.appendChild(option);
-        });
-
-        const dueDateLabel = document.createElement("label");
-        dueDateLabel.textContent = "Due date";
-
-        const dueDateInput = document.createElement("input");
-        dueDateInput.className = "edit-task-due-date";
-        dueDateInput.type = "date";
-        dueDateInput.value = task.dueDate || task.due_date || "";
-
-        const saveButton = document.createElement("button");
-        saveButton.type = "button";
-        saveButton.textContent = "Save changes";
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.textContent = "Edit";
 
         const deleteButton = document.createElement("button");
         deleteButton.type = "button";
-        deleteButton.textContent = "Delete task";
+        deleteButton.textContent = "Delete";
         deleteButton.className = "danger-button";
 
-        const message = document.createElement("p");
-        message.className = "message";
-
-        saveButton.addEventListener("click", function () {
-          updateTask(task.id, taskElement, message);
+        editButton.addEventListener("click", function () {
+          showTaskEditForm(task, taskElement);
         });
 
         deleteButton.addEventListener("click", function () {
           deleteTask(task.id);
         });
 
-        taskElement.appendChild(titleLabel);
-        taskElement.appendChild(titleInput);
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
 
-        taskElement.appendChild(responsibleLabel);
-        taskElement.appendChild(responsibleInput);
-
-        taskElement.appendChild(statusLabel);
-        taskElement.appendChild(statusSelect);
-
-        taskElement.appendChild(dueDateLabel);
-        taskElement.appendChild(dueDateInput);
-
-        taskElement.appendChild(saveButton);
-        taskElement.appendChild(deleteButton);
-        taskElement.appendChild(message);
-      } else {
-        const title = document.createElement("h4");
-        title.textContent = task.title || "Untitled task";
-
-        const description = document.createElement("p");
-        description.textContent = task.description || "No description available.";
-
-        const responsiblePerson = document.createElement("p");
-        responsiblePerson.textContent =
-          "Responsible person: " + (task.responsiblePerson || task.responsible_person || "Not set");
-
-        const status = document.createElement("p");
-        status.innerHTML =
-          "Status: <span class='status-badge'>" + (task.status || "New") + "</span>";
-
-        const dueDate = document.createElement("p");
-        dueDate.textContent =
-          "Due date: " + (task.dueDate || task.due_date || "Not set");
-
-        taskElement.appendChild(title);
-        taskElement.appendChild(description);
-        taskElement.appendChild(responsiblePerson);
-        taskElement.appendChild(status);
-        taskElement.appendChild(dueDate);
+        taskElement.appendChild(actions);
       }
 
       tasksList.appendChild(taskElement);
@@ -500,16 +529,115 @@ async function loadTasks() {
   }
 }
 
+function showTaskEditForm(task, taskElement) {
+  taskElement.innerHTML = "";
+
+  const titleLabel = document.createElement("label");
+  titleLabel.textContent = "Title";
+
+  const titleInput = document.createElement("input");
+  titleInput.className = "edit-task-title";
+  titleInput.value = task.title || "";
+
+  const descriptionLabel = document.createElement("label");
+  descriptionLabel.textContent = "Description";
+
+  const descriptionInput = document.createElement("textarea");
+  descriptionInput.className = "edit-task-description";
+  descriptionInput.value = task.description || "";
+
+  const responsibleLabel = document.createElement("label");
+  responsibleLabel.textContent = "Responsible person";
+
+  const responsibleInput = document.createElement("input");
+  responsibleInput.className = "edit-task-responsible";
+  responsibleInput.value = task.responsiblePerson || task.responsible_person || "";
+
+  const statusLabel = document.createElement("label");
+  statusLabel.textContent = "Status";
+
+  const statusSelect = document.createElement("select");
+  statusSelect.className = "edit-task-status";
+
+  const statuses = ["New", "In Progress", "Waiting for Feedback", "Done"];
+
+  statuses.forEach(function (status) {
+    const option = document.createElement("option");
+    option.value = status;
+    option.textContent = status;
+
+    if (task.status === status) {
+      option.selected = true;
+    }
+
+    statusSelect.appendChild(option);
+  });
+
+  const dueDateLabel = document.createElement("label");
+  dueDateLabel.textContent = "Due date";
+
+  const dueDateInput = document.createElement("input");
+  dueDateInput.className = "edit-task-due-date";
+  dueDateInput.type = "date";
+  dueDateInput.value = task.dueDate || task.due_date || "";
+
+  const actions = document.createElement("div");
+  actions.className = "card-actions";
+
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.textContent = "Save changes";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Cancel";
+  cancelButton.className = "secondary-button";
+
+  const message = document.createElement("p");
+  message.className = "message";
+
+  saveButton.addEventListener("click", function () {
+    updateTask(task.id, taskElement, message);
+  });
+
+  cancelButton.addEventListener("click", function () {
+    loadTasks();
+  });
+
+  actions.appendChild(saveButton);
+  actions.appendChild(cancelButton);
+
+  taskElement.appendChild(titleLabel);
+  taskElement.appendChild(titleInput);
+
+  taskElement.appendChild(descriptionLabel);
+  taskElement.appendChild(descriptionInput);
+
+  taskElement.appendChild(responsibleLabel);
+  taskElement.appendChild(responsibleInput);
+
+  taskElement.appendChild(statusLabel);
+  taskElement.appendChild(statusSelect);
+
+  taskElement.appendChild(dueDateLabel);
+  taskElement.appendChild(dueDateInput);
+
+  taskElement.appendChild(actions);
+  taskElement.appendChild(message);
+}
+
 async function updateTask(taskId, taskElement, messageElement) {
   messageElement.textContent = "Saving task...";
 
   const titleInput = taskElement.querySelector(".edit-task-title");
+  const descriptionInput = taskElement.querySelector(".edit-task-description");
   const responsibleInput = taskElement.querySelector(".edit-task-responsible");
   const statusSelect = taskElement.querySelector(".edit-task-status");
   const dueDateInput = taskElement.querySelector(".edit-task-due-date");
 
   const updatedTask = {
     title: titleInput.value,
+    description: descriptionInput.value,
     responsiblePerson: responsibleInput.value,
     status: statusSelect.value,
     dueDate: dueDateInput.value
@@ -524,6 +652,9 @@ async function updateTask(taskId, taskElement, messageElement) {
     messageElement.textContent = "Task was updated.";
 
     await loadTasks();
+    await loadDashboard();
+
+    showSection("tasks-section");
   } catch (error) {
     messageElement.textContent = "Could not update task.";
   }
@@ -601,17 +732,18 @@ async function loadDecisions() {
       decisionElement.className = "list-item";
 
       const title = document.createElement("h4");
-      title.textContent = decision.title;
+      title.textContent = decision.title || "Untitled decision";
 
       const description = document.createElement("p");
-      description.textContent = decision.description;
+      description.textContent = decision.description || "No description available.";
 
       const proposal = document.createElement("p");
-      proposal.textContent = "Proposal: " + (decision.proposal || "No proposal documented.");
+      proposal.textContent =
+        "Proposal: " + (decision.proposal || "No proposal documented.");
 
       const currentStatus = document.createElement("p");
       currentStatus.innerHTML =
-        "Current status: <span class='status-badge'>" + decision.status + "</span>";
+        "Current status: <span class='status-badge'>" + (decision.status || "Proposal") + "</span>";
 
       const currentResult = document.createElement("p");
       currentResult.textContent =
@@ -624,62 +756,30 @@ async function loadDecisions() {
       decisionElement.appendChild(currentResult);
 
       if (isAdmin()) {
-        const statusLabel = document.createElement("label");
-        statusLabel.textContent = "Change status";
+        const actions = document.createElement("div");
+        actions.className = "card-actions";
 
-        const statusSelect = document.createElement("select");
-        statusSelect.className = "edit-decision-status";
-
-        const statuses = ["Proposal", "In Discussion", "Approved", "Rejected", "Archived"];
-
-        statuses.forEach(function (status) {
-          const option = document.createElement("option");
-          option.value = status;
-          option.textContent = status;
-
-          if (decision.status === status) {
-            option.selected = true;
-          }
-
-          statusSelect.appendChild(option);
-        });
-
-        const resultLabel = document.createElement("label");
-        resultLabel.textContent = "Result";
-
-        const resultInput = document.createElement("textarea");
-        resultInput.className = "edit-decision-result";
-        resultInput.value = decision.result || "";
-
-        const saveButton = document.createElement("button");
-        saveButton.type = "button";
-        saveButton.textContent = "Save decision";
+        const editButton = document.createElement("button");
+        editButton.type = "button";
+        editButton.textContent = "Edit";
 
         const deleteButton = document.createElement("button");
         deleteButton.type = "button";
-        deleteButton.textContent = "Delete decision";
+        deleteButton.textContent = "Delete";
         deleteButton.className = "danger-button";
 
-        const message = document.createElement("p");
-        message.className = "message";
-
-        saveButton.addEventListener("click", function () {
-          updateDecision(decision.id, decisionElement, message);
+        editButton.addEventListener("click", function () {
+          showDecisionEditForm(decision, decisionElement);
         });
 
         deleteButton.addEventListener("click", function () {
           deleteDecision(decision.id);
         });
 
-        decisionElement.appendChild(statusLabel);
-        decisionElement.appendChild(statusSelect);
+        actions.appendChild(editButton);
+        actions.appendChild(deleteButton);
 
-        decisionElement.appendChild(resultLabel);
-        decisionElement.appendChild(resultInput);
-
-        decisionElement.appendChild(saveButton);
-        decisionElement.appendChild(deleteButton);
-        decisionElement.appendChild(message);
+        decisionElement.appendChild(actions);
       }
 
       decisionsList.appendChild(decisionElement);
@@ -707,6 +807,86 @@ async function loadDecisions() {
     decisionsList.innerHTML = "<p class='message error'>Could not load decisions.</p>";
     recentDecisionsList.innerHTML = "<p class='message error'>Could not load recent decisions.</p>";
   }
+}
+
+function showDecisionEditForm(decision, decisionElement) {
+  decisionElement.innerHTML = "";
+
+  const title = document.createElement("h4");
+  title.textContent = decision.title || "Untitled decision";
+
+  const description = document.createElement("p");
+  description.textContent = decision.description || "No description available.";
+
+  const proposal = document.createElement("p");
+  proposal.textContent =
+    "Proposal: " + (decision.proposal || "No proposal documented.");
+
+  const statusLabel = document.createElement("label");
+  statusLabel.textContent = "Change status";
+
+  const statusSelect = document.createElement("select");
+  statusSelect.className = "edit-decision-status";
+
+  const statuses = ["Proposal", "In Discussion", "Approved", "Rejected", "Archived"];
+
+  statuses.forEach(function (status) {
+    const option = document.createElement("option");
+    option.value = status;
+    option.textContent = status;
+
+    if (decision.status === status) {
+      option.selected = true;
+    }
+
+    statusSelect.appendChild(option);
+  });
+
+  const resultLabel = document.createElement("label");
+  resultLabel.textContent = "Result";
+
+  const resultInput = document.createElement("textarea");
+  resultInput.className = "edit-decision-result";
+  resultInput.value = decision.result || "";
+
+  const actions = document.createElement("div");
+  actions.className = "card-actions";
+
+  const saveButton = document.createElement("button");
+  saveButton.type = "button";
+  saveButton.textContent = "Save decision";
+
+  const cancelButton = document.createElement("button");
+  cancelButton.type = "button";
+  cancelButton.textContent = "Cancel";
+  cancelButton.className = "secondary-button";
+
+  const message = document.createElement("p");
+  message.className = "message";
+
+  saveButton.addEventListener("click", function () {
+    updateDecision(decision.id, decisionElement, message);
+  });
+
+  cancelButton.addEventListener("click", function () {
+    loadDecisions();
+  });
+
+  actions.appendChild(saveButton);
+  actions.appendChild(cancelButton);
+
+  decisionElement.appendChild(title);
+  decisionElement.appendChild(description);
+  decisionElement.appendChild(proposal);
+
+  decisionElement.appendChild(statusLabel);
+  decisionElement.appendChild(statusSelect);
+
+  decisionElement.appendChild(resultLabel);
+  decisionElement.appendChild(resultInput);
+
+  decisionElement.appendChild(actions);
+  decisionElement.appendChild(message);
 }
 
 async function updateDecision(decisionId, decisionElement, messageElement) {
@@ -761,21 +941,29 @@ async function deleteDecision(decisionId) {
 function showLogin() {
   loginView.classList.remove("hidden");
   dashboardView.classList.add("hidden");
+  closeSidebar();
 }
 
 function showDashboard() {
   loginView.classList.add("hidden");
   dashboardView.classList.remove("hidden");
 
+  closeSidebar();
   showSection("summary-section");
 }
 
 function showSection(sectionId) {
+  const selectedSection = document.getElementById(sectionId);
+
+  if (!selectedSection) {
+    return;
+  }
+
   dashboardSections.forEach(function (section) {
     section.classList.add("hidden");
   });
 
-  document.getElementById(sectionId).classList.remove("hidden");
+  selectedSection.classList.remove("hidden");
 
   navButtons.forEach(function (button) {
     button.classList.remove("active");
