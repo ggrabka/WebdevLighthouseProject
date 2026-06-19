@@ -37,7 +37,6 @@ function getWeatherText(weatherCode) {
 
 router.get("/", requireLogin, async function (req, res) {
   try {
-    // Coordinates are roughly for Vienna / Seestadt
     const latitude = 48.226;
     const longitude = 16.508;
 

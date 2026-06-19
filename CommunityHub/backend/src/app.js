@@ -49,10 +49,14 @@ app.use(express.json());
 app.use(
   session({
     secret: "communityhub-secret-key",
+    //if session should be saved back to store even if never modified
     resave: false,
+    //if empty session is saved
     saveUninitialized: false,
     cookie: {
+      //prevents from client-side JS to read the cookie
       httpOnly: true,
+      //cookie can be sent over unecrypted http
       secure: false,
       maxAge: 1000 * 60 * 60
     }

@@ -1,14 +1,9 @@
-// This file is responsible for initializing the database with the necessary tables and default data.
-// We use the better-sqlite3 library to connect to a SQLite database and execute SQL queries.
-// We create a database file called communityhub.db in the backend folder, and we run a setup query to create a test table if it doesn't exist.
-// We also check if there are any rows in the test table, and if not, we insert a test message to confirm that the database connection is working properly.
-
 const db = require("./database");
 const bcrypt = require("bcryptjs");
 
+// This function prevents that crash of altering table if column exists by checking if the column is already there before trying to add it
 function addColumnIfMissing(tableName, columnName, columnSql) {
   const columns = db.prepare(`PRAGMA table_info(${tableName})`).all();
-
   const columnExists = columns.some((column) => {
     return column.name === columnName;
   });
