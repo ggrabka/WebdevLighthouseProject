@@ -20,7 +20,7 @@ const app = express();
 initDatabase();
 
 app.use(cors({
-  origin: "http://localhost:5500",
+  origin: ["http://localhost:5500", "http://localhost"],
   credentials: true
 }));
 
