@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CommunityHub</string>
+    <string name="title_activity_main">CommunityHub</string>
+    <string name="package_name">com.communityhub.app</string>
+    <string name="custom_url_scheme">com.communityhub.app</string>
+</resources>

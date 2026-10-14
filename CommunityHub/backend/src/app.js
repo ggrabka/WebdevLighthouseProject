@@ -15,12 +15,14 @@ const decisionRoutes = require("./routes/decisionRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const weatherRoutes = require("./routes/weatherRoutes");
 
+const path = require("path");
+
 const app = express();
 
 initDatabase();
 
 app.use(cors({
-  origin: "http://localhost:5500",
+  origin: ["http://localhost:5500", "http://localhost"],
   credentials: true
 }));
 
@@ -52,6 +54,17 @@ app.use("/api/weather", weatherRoutes);
 app.use("/api/tasks", taskRoutes);
 app.use("/api/decisions", decisionRoutes);
 app.use("/api/dashboard", dashboardRoutes);
+
+const frontendPath = path.join(__dirname, "../../frontend/www");
+
+console.log("Frontend path:", frontendPath);
+console.log("Index exists:", require("fs").existsSync(
+  path.join(frontendPath, "index.html")
+));
+
+app.use(express.static(frontendPath));
+
+//app.use(express.static(path.join(__dirname, "../../frontend/www")));
 
 app.use((req, res, next) => {
   res.status(404).json({
