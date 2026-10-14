@@ -3,7 +3,9 @@ const path = require("path");
 const Database = require("better-sqlite3");
 
 //__dirname is a built-in Node.js variable that gives you the absolute path to the directory where your current JavaScript file lives
-const databasePath = path.join(__dirname, "../../communityhub.db");
+const databasePath =
+  process.env.DB_PATH ||
+  path.join(__dirname, "../../communityhub.db");
 
 // If the file does not exist, SQLite creates it automatically
 const db = new Database(databasePath);
